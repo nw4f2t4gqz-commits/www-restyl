@@ -1,8 +1,7 @@
 # Restyl Drupal – lokální vývoj
 
 Lokální Docker Compose stack obsahuje Composer-managed Drupal, MariaDB a Mailpit.
-Je určen pro vývoj na Apple Silicon (arm64) i Synology s amd64. Služby používají
-multi-arch obrazy; vlastní Drupal image se sestaví pro architekturu daného Dockeru.
+Konfigurace používá předem sestavený Drupal image z GHCR pro Synology s amd64.
 
 ## Stav projektu
 
@@ -18,7 +17,8 @@ příjemci formulářů a síťové zabezpečení administrace vyžadují ověř
 
 - Docker s Compose v2 a funkčním enginem (ověřeno s Docker 29.4.0 a Compose 5.1.1).
 - Volné porty `127.0.0.1:8081` a `127.0.0.1:8026`.
-- Přístup k Docker Hubu a Packagistu při prvním buildu.
+- Přístup k Docker Hubu a GHCR; pro soukromý image přihlášení k GHCR
+  s oprávněním `read:packages`.
 
 Stack nezveřejňuje MariaDB port. Drupal a Mailpit UI naslouchají jen na loopbacku;
 SMTP Mailpitu není publikované na host portu. Výchozí databázové údaje jsou
@@ -32,7 +32,7 @@ V kořeni projektu:
 ```sh
 cp -n .env.example .env
 docker compose config --quiet
-docker compose up -d --build
+docker compose up -d
 docker compose ps
 ```
 
@@ -162,7 +162,7 @@ Další informace jsou v [návodu importu](scripts/README.md) a
 ## Opakované spuštění a data
 
 Po první instalaci stačí `docker compose up -d`. Drupal kód a závislosti jsou
-uzamčeny v `composer.lock` a sestaveny do image. Databáze, uploady a Mailpit
+součástí image z GHCR. Databáze, uploady a Mailpit
 zprávy jsou uloženy v oddělených Docker named volumes:
 
 - `restyl-local_mariadb_data`
@@ -173,8 +173,12 @@ zprávy jsou uloženy v oddělených Docker named volumes:
 Obnova image bez odstranění dat:
 
 ```sh
-docker compose up -d --build
+docker compose pull drupal
+docker compose up -d --no-deps drupal
 ```
+
+Na Synology zachovejte původní název projektu Container Manageru a jeho `.env`;
+jiný název projektu může vytvořit nové prázdné volumes.
 
 Zastavení bez ztráty dat:
 
@@ -219,9 +223,9 @@ databáze.
 Místo pro vlastní téma je `web/themes/custom/restyl` a pro vlastní modul
 `web/modules/custom/restyl_site`. Obsah je výslovně vyňat z `.gitignore`, zatímco
 Drupal core/contrib zůstávají ignorované. Dockerfile při sestavení zkopíruje oba
-adresáře do image, pokud existují; po změně vlastního kódu spusťte
-`docker compose up -d --build`. Importní snapshot a skripty se naopak připojují
-z hosta read-only.
+adresáře do image, pokud existují. Po změně kódu sestavte a publikujte nový
+image pro amd64 a upravte jeho tag v Compose. Importní snapshot a skripty se
+naopak připojují z hosta read-only.
 
 ## Porty a nastavení
 

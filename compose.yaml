@@ -2,9 +2,7 @@ name: restyl-local
 
 services:
   drupal:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/nw4f2t4gqz-commits/www-restyl:2026-11-25
     restart: unless-stopped
     depends_on:
       database:
