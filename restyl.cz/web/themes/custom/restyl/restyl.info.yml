@@ -1,0 +1,22 @@
+name: Restyl
+type: theme
+description: 'Responzivní prezentační téma RESTYL.'
+package: Custom
+core_version_requirement: ^11
+base theme: false
+libraries:
+  - restyl/global
+regions:
+  utility: 'Horní informační lišta'
+  header: 'Značka / obsah hlavičky'
+  primary_menu: 'Hlavní navigace'
+  search: 'Vyhledávání'
+  highlighted: 'Zvýrazněný obsah'
+  breadcrumb: 'Drobečková navigace'
+  content: 'Hlavní obsah'
+  content_bottom: 'Obsah pod hlavním obsahem'
+  footer_contact: 'Kontaktní informace v patičce'
+  footer: 'Patička'
+  footer_bottom: 'Spodní lišta patičky'
+  page_top: 'Začátek stránky'
+  page_bottom: 'Konec stránky'

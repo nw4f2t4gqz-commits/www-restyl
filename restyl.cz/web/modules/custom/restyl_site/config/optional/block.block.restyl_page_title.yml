@@ -1,0 +1,22 @@
+langcode: cs
+status: true
+dependencies:
+  theme:
+    - restyl
+id: restyl_page_title
+theme: restyl
+region: content
+weight: -5
+provider: null
+plugin: page_title_block
+settings:
+  id: page_title_block
+  label: 'Název stránky'
+  label_display: '0'
+  provider: core
+visibility:
+  request_path:
+    id: request_path
+    pages: '<front>'
+    negate: true
+    context_mapping: { }

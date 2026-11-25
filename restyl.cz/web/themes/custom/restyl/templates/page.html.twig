@@ -1,0 +1,147 @@
+{#
+/**
+ * @file
+ * Theme implementation to display a Drupal page.
+ */
+#}
+<div class="layout-container" data-restyl-theme-path="{{ base_path ~ directory }}">
+  <a class="skip-link" href="#main-content">{{ 'Přeskočit na hlavní obsah'|t }}</a>
+
+  {% if page.page_top %}
+    {{ page.page_top }}
+  {% endif %}
+
+  <header class="site-header" role="banner">
+    {% if page.utility %}
+      <div class="utility-bar">
+        <div class="container utility-bar__inner">
+          {{ page.utility }}
+        </div>
+      </div>
+    {% endif %}
+    <div class="container site-header__inner">
+      {% if page.header %}
+        <div class="site-branding">
+          {{ page.header }}
+        </div>
+      {% else %}
+        <a class="site-branding" href="{{ path('<front>') }}" rel="home">
+          <img src="{{ base_path ~ directory }}/images/restyl-logo.png" alt="{{ site_name|default('RESTYL') }}" width="150" height="35">
+        </a>
+      {% endif %}
+      {% if page.primary_menu %}
+        <div class="site-navigation" id="site-navigation">
+          <details class="site-navigation__disclosure" open>
+            <summary class="site-navigation__toggle" aria-controls="primary-menu-panel">
+              <span class="site-navigation__hamburger" aria-hidden="true"></span>
+              <span class="visually-hidden">{{ 'Menu'|t }}</span>
+            </summary>
+            <div class="site-navigation__panel" id="primary-menu-panel">
+              {{ page.primary_menu }}
+            </div>
+          </details>
+          {% if page.search %}
+            <details class="site-search">
+              <summary class="site-search__toggle" aria-controls="site-search-panel">
+                <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                  <circle cx="10.8" cy="10.8" r="6.8"></circle>
+                  <path d="m16 16 5 5"></path>
+                </svg>
+                <span class="visually-hidden">{{ 'Vyhledávání'|t }}</span>
+              </summary>
+              <div class="site-search__panel" id="site-search-panel">
+                {{ page.search }}
+              </div>
+            </details>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if page.highlighted %}
+    <div class="highlighted">
+      <div class="container">
+        {{ page.highlighted }}
+      </div>
+    </div>
+  {% endif %}
+
+  <main id="main-content" tabindex="-1">
+  {% if page.content.restyl_page_title %}
+    <div class="page-title-band">
+      <div class="container">
+        {{ page.content.restyl_page_title }}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if page.breadcrumb %}
+    <div class="breadcrumb-region">
+      <div class="container">
+        {{ page.breadcrumb }}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="site-main">
+    <div class="container">
+      {{ page.content|without('restyl_page_title') }}
+    </div>
+  </div>
+  {% if is_front %}
+    {{ attach_library('restyl/location-map') }}
+    <section class="site-location-map" aria-label="{{ 'Mapa umístění společnosti RESTYL'|t }}">
+      <div
+        class="site-location-map__canvas"
+        data-latitude="50.7333270"
+        data-longitude="15.0560791">
+      </div>
+      <noscript>
+        <p><a href="https://www.google.com/maps?q=50.7333270%2C15.0560791">{{ 'Otevřít adresu společnosti RESTYL v Google Maps'|t }}</a></p>
+      </noscript>
+    </section>
+  {% endif %}
+  </main>
+
+  {% if page.content_bottom %}
+    <div class="content-bottom">
+      <div class="container">
+        {{ page.content_bottom }}
+      </div>
+    </div>
+  {% endif %}
+
+  <footer class="site-footer" role="contentinfo">
+    {% if page.footer or page.footer_contact %}
+      <div class="site-footer__main">
+        <div class="site-footer__layout">
+          {% if page.footer %}
+            <div class="site-footer__company">
+              <a class="site-footer__logo" href="{{ path('<front>') }}" aria-label="{{ 'RESTYL - domovská stránka'|t }}">
+                <img src="{{ base_path ~ directory }}/images/restyl-logo.png" alt="" width="150" height="35">
+              </a>
+              {{ page.footer }}
+            </div>
+          {% endif %}
+          {% if page.footer_contact %}
+            <div class="site-footer__contact">
+              {{ page.footer_contact }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    {% if page.footer_bottom %}
+      <div class="site-footer__bottom">
+        <div class="site-footer__bottom-inner">
+          {{ page.footer_bottom }}
+        </div>
+      </div>
+    {% endif %}
+  </footer>
+
+  {% if page.page_bottom %}
+    {{ page.page_bottom }}
+  {% endif %}
+</div>

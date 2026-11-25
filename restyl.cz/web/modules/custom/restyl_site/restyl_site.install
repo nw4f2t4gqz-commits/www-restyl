@@ -1,0 +1,344 @@
+<?php
+
+/**
+ * @file
+ * Installation of the RESTYL editor role.
+ */
+
+use Drupal\block\Entity\Block;
+use Drupal\block_content\Entity\BlockContent;
+use Drupal\menu_link_content\Entity\MenuLinkContent;
+use Drupal\user\Entity\Role;
+
+/**
+ * Implements hook_install().
+ */
+function restyl_site_install() {
+  Role::load('anonymous')->grantPermission('search content')->save();
+  Role::load('authenticated')->grantPermission('search content')->save();
+  foreach (['restyl_account_menu', 'restyl_help', 'restyl_breadcrumbs', 'restyl_main_menu', 'restyl_powered'] as $block_id) {
+    if ($block = Block::load($block_id)) {
+      $block->disable()->save();
+    }
+  }
+  if ($title_block = Block::load('restyl_page_title')) {
+    $title_block->setRegion('content')->setWeight(-5);
+    $title_block->setVisibilityConfig('request_path', [
+      'id' => 'request_path',
+      'pages' => '<front>',
+      'negate' => TRUE,
+      'context_mapping' => [],
+    ]);
+    $title_block->save();
+  }
+  if (!Role::load('restyl_editor')) {
+    Role::create([
+      'id' => 'restyl_editor',
+      'label' => 'Redaktor RESTYL',
+    ])
+      ->grantPermission('access administration pages')
+      ->grantPermission('access navigation')
+      ->grantPermission('view the administration theme')
+      ->grantPermission('access content overview')
+      ->grantPermission('access block library')
+      ->grantPermission('edit any basic block content')
+      ->grantPermission('create page content')
+      ->grantPermission('edit any page content')
+      ->grantPermission('view own unpublished content')
+      ->grantPermission('use text format basic_html')
+      ->grantPermission('use text format restyl_html')
+      ->save();
+  }
+
+  $links = [
+    ['ELEKTRO', 'internal:/elektro/', 0],
+    ['ENERGY', 'https://restylenergy.cz/', 1],
+    ['PLAN', 'https://www.restylplan.cz/', 2],
+    ['KONTAKT', 'internal:/kontakt/', 3],
+  ];
+  foreach ($links as [$title, $uri, $weight]) {
+    MenuLinkContent::create([
+      'title' => $title,
+      'link' => ['uri' => $uri],
+      'menu_name' => 'main',
+      'weight' => $weight,
+    ])->save();
+  }
+
+  restyl_site_configure_footer_blocks();
+
+  restyl_site_create_utility_blocks();
+}
+
+/**
+ * Returns the editable contact blocks shown in the footer.
+ */
+function restyl_site_footer_blocks() {
+  return [
+    'restyl_o_spolecnosti' => [
+      'title' => 'O společnosti',
+      'label_display' => FALSE,
+      'region' => 'footer',
+      'weight' => 0,
+      'body' => <<<'HTML'
+<p>Společnost zajišťující již 25 let silnoproudou, slaboproudou projektovou dokumentaci včetně její realizace a celkového servisu, nově rozšířeno o kompletní projekci, realizaci a servis technického zabezpečení budov a inženýrské činnosti v oblasti staveb.</p>
+<h3>Certifikáty</h3>
+<p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2019/03/f30dbe8f-restyl_iso_web.pdf?v=8bc998e6">ISO 9001:2015</a></p>
+HTML,
+    ],
+    'restyl_footer_address' => [
+      'title' => 'Kontaktní údaje',
+      'label_display' => 'visible',
+      'region' => 'footer_contact',
+      'weight' => 0,
+      'body' => <<<'HTML'
+<p><a href="https://mapy.cz/zakladni?x=15.0560791&amp;y=50.7333270&amp;z=17&amp;source=addr&amp;id=13979176">Hodkovická 669, Liberec XXIII-Doubí,<br>463 12 Liberec</a></p>
+HTML,
+    ],
+    'restyl_elektro' => [
+      'title' => 'RESTYL ELEKTRO',
+      'label_display' => FALSE,
+      'region' => 'footer_contact',
+      'weight' => 1,
+      'body' => <<<'HTML'
+<p>RESTYL ELEKTRO s.r.o.</p>
+<p><a href="tel:+420608888031">+420 608 888 031</a></p>
+<p><a href="mailto:kuhr@restyl.cz">kuhr@restyl.cz</a></p>
+<p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2018/08/GDPR_RESTYL_ELEKTRO.pdf?v=3c66ef14">GDPR ELEKTRO</a></p>
+<p>IČ: 19889402</p>
+<p>Spisová značka: C 51266 vedená u Krajského soudu v Ústí nad Labem</p>
+HTML,
+    ],
+    'restyl_energy' => [
+      'title' => 'RESTYL ENERGY',
+      'label_display' => FALSE,
+      'region' => 'footer_contact',
+      'weight' => 2,
+      'body' => <<<'HTML'
+<p>RESTYL ENERGY s.r.o.</p>
+<p><a href="tel:+420608880489">+420 608 880 489</a></p>
+<p><a href="mailto:energy@restyl.cz">energy@restyl.cz</a></p>
+<p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2018/08/GDPR_RESTYL_ENERGY.pdf?v=6baa234b">GDPR ENERGY</a></p>
+<p>IČ: 25017217</p>
+<p>Spisová značka: C 11897 vedená u Krajského soudu v Ústí nad Labem</p>
+HTML,
+    ],
+    'restyl_plan' => [
+      'title' => 'RESTYL PLAN',
+      'label_display' => FALSE,
+      'region' => 'footer_contact',
+      'weight' => 3,
+      'body' => <<<'HTML'
+<p>RESTYL PLAN s.r.o.</p>
+<p><a href="tel:+420770622882">+420 770 622 882</a></p>
+<p><a href="mailto:sobotka@restyl-plan.cz">sobotka@restyl-plan.cz</a></p>
+<p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2018/08/GDPR_RESTYL_ENERGY.pdf?v=6baa234b">GDPR PLAN</a></p>
+<p>IČ: 07203985</p>
+<p>Spisová značka: C 11897 vedená u Krajského soudu v Ústí nad Labem</p>
+HTML,
+    ],
+    'restyl_footer_copyright' => [
+      'title' => 'Copyright a sociální sítě',
+      'label_display' => FALSE,
+      'region' => 'footer_bottom',
+      'weight' => 0,
+      'body' => <<<'HTML'
+<p>Copyright@2018 MŠ</p>
+<p><a href="https://www.facebook.com/Restyl-Energy-600100717056707/">Facebook</a> <a href="https://www.linkedin.com/company/restyl-energy/">LinkedIn</a></p>
+HTML,
+    ],
+  ];
+}
+
+/**
+ * Creates or rearranges the editable footer contact blocks.
+ */
+function restyl_site_configure_footer_blocks($update_existing = FALSE) {
+  $legacy_bodies = [
+    'restyl_elektro' => '<p><a href="https://mapy.cz/zakladni?x=15.0560791&amp;y=50.7333270&amp;z=17&amp;source=addr&amp;id=13979176">Hodkovická 669, Liberec XXIII-Doubí, 463 12 Liberec</a></p><p>RESTYL ELEKTRO s.r.o.</p><p><a href="tel:+420608888031">+420 608 888 031</a></p><p><a href="mailto:kuhr@restyl.cz">kuhr@restyl.cz</a></p><p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2018/08/GDPR_RESTYL_ELEKTRO.pdf?v=3c66ef14">GDPR ELEKTRO</a></p><p>IČ: 19889402</p><p>Spisová značka: C 51266 vedená u Krajského soudu v Ústí nad Labem</p>',
+    'restyl_energy' => '<p>RESTYL ENERGY s.r.o.</p><p><a href="tel:+420608880489">+420 608 880 489</a></p><p><a href="mailto:energy@restyl.cz">energy@restyl.cz</a></p><p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2018/08/GDPR_RESTYL_ENERGY.pdf?v=6baa234b">GDPR ENERGY</a></p><p>IČ: 25017217</p><p>Spisová značka: C 11897 vedená u Krajského soudu v Ústí nad Labem</p>',
+    'restyl_plan' => '<p>RESTYL PLAN s.r.o.</p><p><a href="tel:+420770622882">+420 770 622 882</a></p><p><a href="mailto:sobotka@restyl-plan.cz">sobotka@restyl-plan.cz</a></p><p>IČ: 07203985</p>',
+  ];
+
+  foreach (restyl_site_footer_blocks() as $id => $definition) {
+    $block = Block::load($id);
+    if (!$block) {
+      $content = BlockContent::create([
+        'type' => 'basic',
+        'info' => $definition['title'],
+        'body' => ['value' => $definition['body'], 'format' => 'basic_html'],
+        'reusable' => TRUE,
+      ]);
+      $content->save();
+      Block::create([
+        'id' => $id,
+        'theme' => 'restyl',
+        'region' => $definition['region'],
+        'weight' => $definition['weight'],
+        'plugin' => 'block_content:' . $content->uuid(),
+        'settings' => [
+          'label' => $definition['title'],
+          'label_display' => $definition['label_display'],
+        ],
+      ])->save();
+      continue;
+    }
+
+    if (!$update_existing) {
+      continue;
+    }
+
+    $content = restyl_site_load_block_content($block);
+    if (isset($legacy_bodies[$id]) && $content && $content->get('body')->value === $legacy_bodies[$id]) {
+      $content->set('body', [
+        'value' => $definition['body'],
+        'format' => 'basic_html',
+      ])->save();
+    }
+
+    $settings = $block->get('settings');
+    $settings['label'] = $definition['title'];
+    $settings['label_display'] = $definition['label_display'];
+    $block
+      ->setRegion($definition['region'])
+      ->setWeight($definition['weight'])
+      ->set('settings', $settings);
+    if ($id === 'restyl_o_spolecnosti') {
+      $block->enable();
+    }
+    $block->save();
+  }
+}
+
+/**
+ * Loads reusable block content referenced by a configured block.
+ */
+function restyl_site_load_block_content(Block $block) {
+  if (!str_starts_with($block->get('plugin'), 'block_content:')) {
+    return NULL;
+  }
+
+  $content_uuid = substr($block->get('plugin'), strlen('block_content:'));
+  $content_entities = \Drupal::entityTypeManager()
+    ->getStorage('block_content')
+    ->loadByProperties(['uuid' => $content_uuid]);
+
+  return reset($content_entities) ?: NULL;
+}
+
+/**
+ * Adds editable blocks to the header without replacing existing blocks.
+ */
+function restyl_site_create_utility_blocks() {
+  $blocks = [
+    'restyl_utility_address' => [
+      'Adresa v horní liště',
+      '<p>Hodkovická 669, Liberec XXIII-Doubí, 463 12 Liberec</p>',
+    ],
+    'restyl_utility_social' => [
+      'Sociální sítě v horní liště',
+      '<p><a href="https://www.facebook.com/Restyl-Energy-600100717056707/">Facebook</a> <a href="https://www.linkedin.com/company/restyl-energy/">LinkedIn</a></p>',
+    ],
+  ];
+  $weight = 0;
+  foreach ($blocks as $id => [$title, $body]) {
+    if (Block::load($id)) {
+      $weight++;
+      continue;
+    }
+    $content = BlockContent::create([
+      'type' => 'basic',
+      'info' => $title,
+      'body' => ['value' => $body, 'format' => 'basic_html'],
+      'reusable' => TRUE,
+    ]);
+    $content->save();
+    Block::create([
+      'id' => $id,
+      'theme' => 'restyl',
+      'region' => 'utility',
+      'weight' => $weight++,
+      'plugin' => 'block_content:' . $content->uuid(),
+      'settings' => ['label' => $title, 'label_display' => FALSE],
+    ])->save();
+  }
+}
+
+/**
+ * Adds the editable header blocks to existing installations.
+ */
+function restyl_site_update_10001() {
+  restyl_site_create_utility_blocks();
+}
+
+/**
+ * Aligns the company footer block with the original RESTYL footer.
+ */
+function restyl_site_update_10002() {
+  return restyl_site_update_company_footer();
+}
+
+/**
+ * Reapplies the footer update where the earlier update used the UUID as an ID.
+ */
+function restyl_site_update_10003() {
+  return restyl_site_update_company_footer();
+}
+
+/**
+ * Matches the footer contact layout and content to the reference.
+ */
+function restyl_site_update_10004() {
+  restyl_site_configure_footer_blocks(TRUE);
+
+  return t('Updated the RESTYL footer contact layout and content.');
+}
+
+/**
+ * Restores the company and certificates column beside the footer contacts.
+ */
+function restyl_site_update_10005() {
+  restyl_site_configure_footer_blocks(TRUE);
+
+  return t('Restored the RESTYL company and certificates footer column.');
+}
+
+/**
+ * Adds the editable copyright and social links to the footer.
+ */
+function restyl_site_update_10006() {
+  restyl_site_configure_footer_blocks(TRUE);
+
+  return t('Added the RESTYL footer copyright and social links.');
+}
+
+/**
+ * Updates the company footer block and hides its title.
+ */
+function restyl_site_update_company_footer() {
+  $block = Block::load('restyl_o_spolecnosti');
+  if (!$block || !str_starts_with($block->get('plugin'), 'block_content:')) {
+    return t('The RESTYL company footer block was not found; no changes were made.');
+  }
+
+  $content_uuid = substr($block->get('plugin'), strlen('block_content:'));
+  $content_entities = \Drupal::entityTypeManager()
+    ->getStorage('block_content')
+    ->loadByProperties(['uuid' => $content_uuid]);
+  $content = reset($content_entities);
+  if (!$content) {
+    return t('The RESTYL company footer content was not found; no changes were made.');
+  }
+
+  $content->set('body', [
+    'value' => '<p>Společnost zajišťující již 25 let silnoproudou, slaboproudou projektovou dokumentaci včetně její realizace a celkového servisu, nově rozšířeno o kompletní projekci, realizaci a servis technického zabezpečení budov a inženýrské činnosti v oblasti staveb.</p><h3>Certifikáty</h3><p><a href="https://media.smtx.cz/file/media-b8a28-eu/s/768186e0fbc6/2019/03/f30dbe8f-restyl_iso_web.pdf?v=8bc998e6">ISO 9001:2015</a></p>',
+    'format' => 'basic_html',
+  ]);
+  $content->save();
+
+  $settings = $block->get('settings');
+  $settings['label_display'] = FALSE;
+  $block->set('settings', $settings)->save();
+
+  return t('Updated the RESTYL company footer text and hid its block title.');
+}

@@ -1,0 +1,15 @@
+{#
+/**
+ * @file
+ * Theme implementation for the site branding block.
+ */
+#}
+{{ title_prefix }}
+{% if site_name or site_slogan %}
+  <div{{ attributes.addClass('site-branding-block') }}>
+    {{ title_suffix }}
+    <a class="site-branding-block__link" href="{{ path('<front>') }}" rel="home">
+      <img src="{{ path('<front>') ~ directory }}/images/restyl-logo.png" alt="{{ site_name|default('RESTYL') }}" width="150" height="35">
+    </a>
+  </div>
+{% endif %}

@@ -1,0 +1,99 @@
+name: restyl-local
+
+services:
+  drupal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_NAME: ${MARIADB_DATABASE:-restyl}
+      DB_USER: ${MARIADB_USER:-restyl}
+      DB_PASSWORD: ${MARIADB_PASSWORD:-restyl_local_dev_only}
+      MAIL_HOST: mailpit
+      MAIL_PORT: "1025"
+      RESTYL_MAIL_FROM: ${RESTYL_MAIL_FROM:-}
+      RESTYL_MAIL_TO_ELEKTRO: ${RESTYL_MAIL_TO_ELEKTRO:-}
+      RESTYL_MAIL_TO_ENERGY: ${RESTYL_MAIL_TO_ENERGY:-}
+      RESTYL_REVERSE_PROXY_ADDRESS: ${RESTYL_REVERSE_PROXY_ADDRESS:-}
+    ports:
+      - "${SITE_BIND:-127.0.0.1}:${SITE_PORT:-8081}:80"
+    volumes:
+      - drupal_files:/var/www/html/web/sites/default/files
+      - drupal_private:/var/www/private
+      - type: bind
+        source: ./docker/settings.php
+        target: /var/www/html/web/sites/default/settings.php
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./scripts
+        target: /var/www/html/scripts
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./content
+        target: /var/www/html/content
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  database:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-restyl}
+      MARIADB_USER: ${MARIADB_USER:-restyl}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-restyl_local_dev_only}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-restyl_root_local_dev_only}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "500"
+      MP_DATABASE: /data/mailpit.db
+    ports:
+      - "${MAILPIT_BIND:-127.0.0.1}:${MAILPIT_UI_PORT:-8026}:8025"
+    volumes:
+      - mailpit_data:/data
+    networks:
+      - backend
+
+volumes:
+  drupal_files:
+  drupal_private:
+  mariadb_data:
+  mailpit_data:
+
+networks:
+  frontend:
+  backend:

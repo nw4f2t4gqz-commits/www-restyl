@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Mail messages for the RESTYL contact forms.
+ */
+
+/**
+ * Implements hook_mail().
+ */
+function restyl_site_mail($key, &$message, $params) {
+  if ($key === 'contact') {
+    $message['subject'] = $params['subject'];
+    $message['body'][] = $params['body'];
+    $message['from'] = $params['from'];
+    $message['headers']['From'] = $params['from'];
+    $message['headers']['Sender'] = $params['from'];
+    $message['headers']['Return-Path'] = $params['from'];
+    $message['headers']['Reply-to'] = $params['reply_to'];
+  }
+}

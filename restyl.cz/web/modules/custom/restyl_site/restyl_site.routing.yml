@@ -1,0 +1,8 @@
+restyl_site.contact:
+  path: '/formular/{division}'
+  defaults:
+    _form: '\Drupal\restyl_site\Form\ContactForm'
+    _title: 'Kontaktní formulář'
+  requirements:
+    _permission: 'access content'
+    division: 'elektro|energy'

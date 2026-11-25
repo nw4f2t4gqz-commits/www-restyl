@@ -1,0 +1,19 @@
+langcode: cs
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - restyl
+id: restyl_content
+theme: restyl
+region: content
+weight: 0
+provider: null
+plugin: system_main_block
+settings:
+  id: system_main_block
+  label: 'Hlavní obsah'
+  label_display: '0'
+  provider: system
+visibility: { }
